@@ -27,10 +27,10 @@ Graf *napravi_element( int vrednost , double tezina , char *ime , int br_ulice )
 
 void dodaj_ivicu( Graf **glava , double vrednost , double tezina , char *ime );
 
-int prazna_linija( char *linija );
-
 char **napravi_niz( char **niz , int dim );
 
 Graf **napravi_graf( Graf **G , int *dim1 );
 
 void stampaj( Graf **G, Brojaci dim );
+
+void obrisi_graf( Graf **G , int dim );
