@@ -9,8 +9,6 @@ int main( void )
     stampaj( G , dim );
     
     obrisi_graf( G , dim );
-
-    //Promena
     
     return( 0 );
 }
