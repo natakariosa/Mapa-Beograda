@@ -9,6 +9,6 @@ int main( void )
     stampaj( G , dim );
     
     obrisi_graf( G , dim );
-    
+    //proba
     return( 0 );
 }
