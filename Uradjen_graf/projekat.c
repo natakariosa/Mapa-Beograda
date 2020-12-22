@@ -1,5 +1,6 @@
 #include "projekat.h"
-#include<math.h>
+#include "red1.h"
+#include <math.h>
 
 FILE *otvori( char *ime , char *kako )
 {
@@ -10,12 +11,13 @@ FILE *otvori( char *ime , char *kako )
     return( d );
 }
 
-Cvor *napravi_cvor( long id , double lat , double lon , double tezina , char *ime )
+Cvor *napravi_cvor( long id , double lat , double lon , double tezina , char *ime, long brojac )
 {
     Cvor *novi_el = ( Cvor * ) malloc( sizeof( Cvor ) );
     if( novi_el == NULL ) exit( EXIT_FAILURE );
     
     novi_el->id = id;
+    novi_el->redniBroj = brojac;
     novi_el->lat = lat;
     novi_el->lon = lon;
     novi_el->tezina = tezina;
@@ -63,14 +65,14 @@ void dodaj_ivicu( Cvor **A , Cvor *B , char *ime )
     Cvor *pom = NULL;
     double tezina = haversine_formula( (*A)->lat , (*A)->lon , B->lat , B->lon );
     
-    if( *A == NULL ) *A = napravi_cvor( B->id , B->lat , B->lon , tezina , ime );
+    if( *A == NULL ) *A = napravi_cvor( B->id , B->lat , B->lon , tezina , ime, B->redniBroj );
     else
     {
         pom = *A;
         
         while( pom->sledeci ) pom = pom->sledeci;
         
-        pom->sledeci = napravi_cvor( B->id , B->lat , B->lon , tezina , ime ); 
+        pom->sledeci = napravi_cvor( B->id , B->lat , B->lon , tezina , ime, B->redniBroj ); 
     };
 }
 
@@ -80,7 +82,7 @@ Graf *napravi_graf()
     Cvor *pomocni = NULL;
     FILE *dat1 = otvori( "pevac_putevi.txt", "r" ) , *dat2 = otvori( "pevac_cvorovi.txt", "r" );
     char c , ind1 = 0 , ind2 = 0 , ime[100] , pom[100] , *ime_puta = NULL;
-    int i = 0 , j = 0 , k = 0 , m , ind = 0;
+    long i = 0 , j = 0 , k = 0 , m , ind = 0, brojac = 0;
     long dim , id , prvi , drugi , id_cvora , id_puta , *niz_id_cvorova = NULL;
     double lat , lon;
     
@@ -98,7 +100,7 @@ Graf *napravi_graf()
     {
         fscanf( dat2 , "%ld %lf %lf" , &id , &lat , &lon );
         
-        G->putevi[i++] = napravi_cvor( id , lat , lon , 0 , "Nema" );
+        G->putevi[i++] = napravi_cvor( id , lat , lon , 0 , "Nema", brojac++ );
     };
     
     i = 0;
@@ -280,6 +282,146 @@ Graf *napravi_graf()
     };
     
     return( G );
+}
+
+void pokupi_argumente( int argc, char **argv, long *pocetak, long *kraj )
+{
+  if( argc != 3 )
+  {
+      printf( "Greska pri unosenju argumenata!\n" );
+      exit( EXIT_FAILURE );
+  };
+
+  *pocetak = atof( *( argv + 1 ) );
+
+  *kraj    = atof( *( argv + 2 ) );
+}
+
+void nadji_cvorove( Graf *G, long pocetak, long kraj, long *A, long *B )
+{
+  long i;
+  unsigned char ind1 = 0, ind2 = 0;
+
+  *A = -1;
+
+  *B = -1;
+
+  for( i = 0 ; i < G->dim, ( ind1 + ind2 ) != 2 ; i++ )
+  {
+    if( !ind1 && G->putevi[i]->id == pocetak )
+    {
+      *A = i;
+      
+      ind1 = 1;
+    }
+
+    else if( !ind2 && G->putevi[i]->id == kraj )
+    {
+      *B = i;
+
+      ind2 = 1;
+    }
+  };
+
+  if( *A == -1 || *B == -1 )
+  {
+    printf( "Uneti cvorovi nisu nadjeni!\n" );
+
+    exit( EXIT_FAILURE );
+  }
+
+}
+
+void stampaj_putanju( Graf *G, long start, long cilj )
+{
+  long i, trenutni = cilj;
+  long brojac = 0, memorija = 100;
+  long *niz = ( long * ) malloc( sizeof( long ) * 200 );
+
+  niz[brojac++] = cilj;
+
+  while( trenutni != start )
+  {
+    if( brojac == memorija )
+    {
+      niz = ( long * ) realloc( niz, sizeof( long ) * ( brojac + 200 ) );
+
+      memorija += 100;
+    };
+
+    niz[brojac++] = G->putevi[trenutni]->put;
+
+    trenutni = G->putevi[trenutni]->put;
+  };
+  
+  printf( "Putanja kojom treba ici od %s do %s je:\n", G->putevi[start]->ime, G->putevi[cilj]->ime );
+
+  for( i = brojac - 1 ; i >= 0 ; i-- )
+  {
+    printf( "%s -> ", G->putevi[*( niz + i )]->ime );
+  };
+
+  printf( "\nA rastojanje je: %lf\n", G->putevi[cilj]->rastojanje );
+}
+
+void nadji_cilj( Graf *G, int argc, char **argv )
+{  
+  Cvor *pom;
+
+  long poseceni[G->dim];
+  long id1, id2, start, cilj, poc, kraj;
+  long i;
+
+  Red *niz = NULL;
+  Red *rep = NULL;
+
+  for( i = 0 ; i < G->dim ; i++ ) poseceni[i] = 0;
+
+  pokupi_argumente( argc, argv, &id1, &id2 );
+
+  nadji_cvorove( G, id1, id2, &start, &cilj );
+
+  poc = start;
+
+  kraj = cilj;
+
+  G->putevi[poc]->rastojanje = 0;
+
+  push( &niz, &rep, poc );
+
+  while( jel_red_prazan( niz ) ) //sve dok ne proverimo sve puteve
+  {
+    poc = pop( &niz );
+
+    poseceni[poc] = 1;
+
+    pom = G->putevi[poc];
+
+    pom = pom->sledeci;
+
+    while( pom ) //BFS Obilazak
+    {
+      if( !poseceni[pom->redniBroj] )
+      {
+        push( &niz, &rep, pom->redniBroj );
+
+        poseceni[pom->redniBroj] = 1;
+      };
+
+      if( G->putevi[poc]->rastojanje + pom->tezina < G->putevi[pom->redniBroj]->rastojanje ) //ako je put preko tog cvora manji od starog
+      {
+        G->putevi[pom->redniBroj]->rastojanje = G->putevi[poc]->rastojanje + pom->tezina;
+
+        G->putevi[pom->redniBroj]->put = poc; //Oznacavamo kako posle da znamo put od poc do cilja
+      };
+
+      pom = pom->sledeci;
+    };
+  };
+
+  stampaj_putanju( G, start, cilj );
+
+  free( pom );
 }
 
 void stampaj( Graf *G )

@@ -7,6 +7,7 @@
 typedef struct _Cvor //cvor liste
 {
     long id;
+    long redniBroj;
     char ime[100];
     double lat;
     double lon;
@@ -24,7 +25,7 @@ typedef struct _Graf
 
 FILE *otvori( char *ime , char *kako );
 
-Cvor *napravi_cvor( long id , double lat , double lon , double tezina , char *ime );
+Cvor *napravi_cvor( long id , double lat , double lon , double tezina , char *ime , long brojac );
 
 Graf *inicijalizuj_graf( Graf *G , long dim );
 
@@ -35,5 +36,9 @@ void dodaj_ivicu( Cvor **A , Cvor *B , char *ime );
 void dodaj_ime( Graf **G , long id_cvora , char *ime_puta );
 
 Graf *napravi_graf();
+
+void stampaj_putanju( Graf *G, long start, long cilj );
+
+void nadji_cilj( Graf *G, int argc, char **argv );
 
 void stampaj( Graf *G );

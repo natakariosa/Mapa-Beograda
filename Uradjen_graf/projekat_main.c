@@ -1,10 +1,12 @@
 #include "projekat.h"
 
-int main( void ) //kompajlovati sa: gcc projekat_main.c projekat.c projekat.h -o a.out -lm
+int main( int argc, char **argv ) //kompajlovati sa: gcc projekat_main.c projekat.c projekat.h -o a.out -lm
 {
     Graf *G = napravi_graf();
+
+    nadji_cilj( G, argc, argv );
    
-    stampaj( G );
+    //stampaj( G );
     
     return( 0 );
 }
