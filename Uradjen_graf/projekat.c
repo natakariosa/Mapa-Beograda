@@ -334,9 +334,10 @@ void nadji_cvorove( Graf *G, long pocetak, long kraj, long *A, long *B )
 
 void stampaj_putanju( Graf *G, long start, long cilj )
 {
-  long i, trenutni = cilj;
-  long brojac = 0, memorija = 100;
+  long i, k = 0 , trenutni = cilj , *pom = ( long * ) calloc( 200 , sizeof( long ) );
+  long pomocni, brojac = 0, memorija = 100;
   long *niz = ( long * ) malloc( sizeof( long ) * 200 );
+  char **niz_pom = NULL;
 
   niz[brojac++] = cilj;
 
@@ -350,18 +351,66 @@ void stampaj_putanju( Graf *G, long start, long cilj )
     };
 
     niz[brojac++] = G->putevi[trenutni]->put;
+    
+    if( !strcmp( G->putevi[trenutni]->ime , "Nema" ) ) pom[k] = G->putevi[trenutni]->id;
+    
+    k++;
 
     trenutni = G->putevi[trenutni]->put;
   };
   
-  printf( "Putanja kojom treba ici od %s do %s je:\n", G->putevi[start]->ime, G->putevi[cilj]->ime );
-
-  for( i = brojac - 1 ; i >= 0 ; i-- )
+  i = 0;
+  
+  while( i < k-i-1 ) //niz je obrnut da bi se poklapali indeksi u for petlji za stampanje
   {
-    printf( "%s -> ", G->putevi[*( niz + i )]->ime );
+    pomocni = pom[i];   
+    pom[i] = pom[k-i-1];
+    pom[k-i-1] = pomocni;
+        
+    i++;
+  };
+  
+  k = 0;
+  
+  printf( "Putanja kojom treba ici od %s do %s je:\n", G->putevi[start]->ime, G->putevi[cilj]->ime );
+  
+  niz_pom = ( char ** ) malloc( sizeof( char * ) * brojac );
+  if( niz_pom == NULL ) exit( EXIT_FAILURE );
+
+  for( i = brojac - 1 ; i >= 0 ; i-- ) 
+  {
+      niz_pom[k] = ( char * ) malloc( sizeof( char ) * 100 );
+      
+      strcpy( niz_pom[k++] , G->putevi[*( niz + i )]->ime );
+  };
+
+  for( i = 0 ; i < brojac - 1 ; i++ )
+  {
+      if( !i || strcmp( niz_pom[i] , niz_pom[i+1] ) ) 
+      {
+          if( i ) 
+          {
+              if( !strcmp( niz_pom[i] , "Nema" ) ) printf( "%ld(%s) ->%s -> ", pom[i-1] , niz_pom[i] , niz_pom[i+1] );
+              else if( !strcmp( niz_pom[i+1] , "Nema" ) ) printf( "%s -> %ld(%s) -> ", niz_pom[i] , pom[i] , niz_pom[i+1] );
+              else printf( "%s -> %s -> ", niz_pom[i] , niz_pom[i+1] );
+          }
+          else 
+          {
+              if( strcmp( niz_pom[i] , "Nema" ) ) printf( "%s -> ", niz_pom[i] );
+              else printf( "%ld(%s) -> ", pom[i-1] , niz_pom[i] );
+          };
+      };
   };
 
   printf( "\nA rastojanje je: %lf\n", G->putevi[cilj]->rastojanje );
+  
+  for( i = 0 ; i < brojac ; i++ ) free( niz_pom[i] );
+  
+  free( pom );
+  
+  free( niz );
+  
+  free( niz_pom );
 }
 
 void nadji_cilj( Graf *G, int argc, char **argv )
