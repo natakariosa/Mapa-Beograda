@@ -64,14 +64,14 @@ void dodaj_ivicu( Cvor **A , Cvor *B , char *ime )
 {
     Cvor *pom = NULL;
     double tezina = haversine_formula( (*A)->lat , (*A)->lon , B->lat , B->lon );
-    
+
     if( *A == NULL ) *A = napravi_cvor( B->id , B->lat , B->lon , tezina , ime, B->redniBroj );
     else
     {
         pom = *A;
-        
+
         while( pom->sledeci ) pom = pom->sledeci;
-        
+
         pom->sledeci = napravi_cvor( B->id , B->lat , B->lon , tezina , ime, B->redniBroj ); 
     };
 }
@@ -228,6 +228,8 @@ Graf *napravi_graf()
 
                 k = 0;
             };
+            
+            if( ind ) ind = 0;
         }
         else if( !strcmp( ime , "id" ) )
         {
