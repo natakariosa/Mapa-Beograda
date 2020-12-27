@@ -41,7 +41,7 @@ Graf *napravi_graf();
 
 void stampaj_putanju( Graf *G, long start, long cilj );
 
-void nadji_cilj( Graf *G, int argc, char **argv );
+void nadji_cilj_kola( Graf *G, int argc, char **argv );
 
 void nadji_cilj_pesak( Graf *G, int argc, char **argv );
 

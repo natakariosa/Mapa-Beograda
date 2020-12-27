@@ -237,7 +237,7 @@ Graf *napravi_graf()
                 k = 0;
             };
             
-            if( ind ) ind = 0;
+           if( ind ) ind = 0;
         }
         else if( !strcmp( ime , "id" ) )
         {
@@ -423,7 +423,7 @@ void stampaj_putanju( Graf *G, long start, long cilj )
   free( niz_pom );
 }
 
-void nadji_cilj( Graf *G, int argc, char **argv )
+void nadji_cilj_kola( Graf *G, int argc, char **argv )
 {  
   Cvor *pom, *pom1;
 

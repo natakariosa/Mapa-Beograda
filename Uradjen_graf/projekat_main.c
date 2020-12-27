@@ -6,6 +6,8 @@ int main( int argc, char **argv ) //kompajlovati sa: gcc projekat_main.c projeka
     Graf *G = napravi_graf();
 
     nadji_cilj( G, argc, argv );
+
+    nadji_cilj( G, argc, argv );
    
     //stampaj( G );
     
