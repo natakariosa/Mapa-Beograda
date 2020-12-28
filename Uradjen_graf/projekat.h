@@ -8,6 +8,8 @@ typedef struct _Cvor //cvor liste
 {
     long id;
     long redniBroj;
+    long *jednosmerne;
+    long dim_jednosmerne;
     char ime[100];
     double lat;
     double lon;
@@ -41,4 +43,8 @@ void stampaj_putanju( Graf *G, long start, long cilj );
 
 void nadji_cilj_kola( Graf *G, int argc, char **argv );
 
+void nadji_cilj_pesak( Graf *G, int argc, char **argv );
+
 void stampaj( Graf *G );
+
+void obrisi_graf( Graf *G );

@@ -24,7 +24,9 @@ Cvor *napravi_cvor( long id , double lat , double lon , double tezina , char *im
     novi_el->put = INFINITY;
     novi_el->rastojanje = INFINITY;
     novi_el->sledeci = NULL;
-    
+    novi_el->dim_jednosmerne = 0;
+    novi_el->jednosmerne = ( long * ) malloc( sizeof( long ) );
+
     strcpy( novi_el->ime , ime );
     
     return( novi_el );
@@ -82,7 +84,7 @@ Graf *napravi_graf()
     Cvor *pomocni = NULL;
     FILE *dat1 = otvori( "pevac_putevi.txt", "r" ) , *dat2 = otvori( "pevac_cvorovi.txt", "r" );
     char c , ind1 = 0 , ind2 = 0 , ime[100] , pom[100] , *ime_puta = NULL;
-    long i = 0 , j = 0 , k = 0 , m , ind = 0, brojac = 0;
+    long i = 0 , j = 0 , k = 0 , m , ind = 0, brojac = 0, z = 0;
     long dim , id , prvi , drugi , id_cvora , id_puta , *niz_id_cvorova = NULL;
     double lat , lon;
     
@@ -222,14 +224,18 @@ Graf *napravi_graf()
                             ind2 = 0;
                         };
                     };
+                }
+                else
+                {
+                    G->putevi[drugi]->jednosmerne[ G->putevi[drugi]->dim_jednosmerne] = G->putevi[prvi]->redniBroj;
+                    G->putevi[drugi]->dim_jednosmerne++;
                 };
+                
                 
                 if( ime_puta ) ime_puta = NULL;
 
                 k = 0;
             };
-            
-            if( ind ) ind = 0;
         }
         else if( !strcmp( ime , "id" ) )
         {
@@ -386,7 +392,7 @@ void stampaj_putanju( Graf *G, long start, long cilj )
       strcpy( niz_pom[k++] , G->putevi[*( niz + i )]->ime );
   };
 
-  for( i = 0 ; i < brojac - 1 ; i++ )
+  for( i = 0 ; i < brojac - 2 ; i++ )
   {
       if( !i || strcmp( niz_pom[i] , niz_pom[i+1] ) ) 
       {
@@ -404,7 +410,9 @@ void stampaj_putanju( Graf *G, long start, long cilj )
       };
   };
 
-  printf( "\nA rastojanje je: %lf\n", G->putevi[cilj]->rastojanje );
+  printf( "%s(Kрај)\n" , niz_pom[brojac-1]);
+
+  printf( "\nA rastojanje je: %.0lfm\n", G->putevi[cilj]->rastojanje );
   
   for( i = 0 ; i < brojac ; i++ ) free( niz_pom[i] );
   
@@ -415,12 +423,12 @@ void stampaj_putanju( Graf *G, long start, long cilj )
   free( niz_pom );
 }
 
-void nadji_cilj( Graf *G, int argc, char **argv )
+void nadji_cilj_kola( Graf *G, int argc, char **argv )
 {  
-  Cvor *pom;
+  Cvor *pom, *pom1;
 
   long poseceni[G->dim];
-  long id1, id2, start, cilj, poc, kraj;
+  long id1, id2, start, cilj, poc, kraj, ind, indeks;
   long i;
 
   Red *niz = NULL;
@@ -452,21 +460,98 @@ void nadji_cilj( Graf *G, int argc, char **argv )
 
     while( pom ) //BFS Obilazak
     {
-      if( !poseceni[pom->redniBroj] )
-      {
-        push( &niz, &rep, pom->redniBroj );
+        if( !poseceni[pom->redniBroj] )
+        {
+            push( &niz, &rep, pom->redniBroj );
+            poseceni[pom->redniBroj] = 1;
+            ind++;
+        };
 
-        poseceni[pom->redniBroj] = 1;
-      };
+        if( G->putevi[poc]->rastojanje + pom->tezina < G->putevi[pom->redniBroj]->rastojanje ) //ako je put preko tog cvora manji od starog
+        {
+            G->putevi[pom->redniBroj]->rastojanje = G->putevi[poc]->rastojanje + pom->tezina;
 
-      if( G->putevi[poc]->rastojanje + pom->tezina < G->putevi[pom->redniBroj]->rastojanje ) //ako je put preko tog cvora manji od starog
-      {
-        G->putevi[pom->redniBroj]->rastojanje = G->putevi[poc]->rastojanje + pom->tezina;
+            G->putevi[pom->redniBroj]->put = poc; //Oznacavamo kako posle da znamo put od poc do cilja
+        };
 
-        G->putevi[pom->redniBroj]->put = poc; //Oznacavamo kako posle da znamo put od poc do cilja
-      };
+        pom = pom->sledeci;
+        
+    };
+  };
 
-      pom = pom->sledeci;
+  stampaj_putanju( G, start, cilj );
+
+  free( pom );
+}
+
+void nadji_cilj_pesak( Graf *A, int argc, char **argv )
+{  
+  Cvor *pom, *pom1;
+
+  Graf *G = A;
+  long poseceni[G->dim];
+  long id1, id2, start, cilj, poc, kraj, ind, indeks;
+  long i;
+
+  Red *niz = NULL;
+  Red *rep = NULL;
+
+  for( i = 0 ; i < G->dim ; i++ ) poseceni[i] = 0;
+
+  pokupi_argumente( argc, argv, &id1, &id2 );
+
+  nadji_cvorove( G, id1, id2, &start, &cilj );
+
+  poc = start;
+
+  kraj = cilj;
+
+  G->putevi[poc]->rastojanje = 0;
+
+  push( &niz, &rep, poc );
+
+  while( jel_red_prazan( niz ) ) //sve dok ne proverimo sve puteve
+  {
+    poc = pop( &niz );
+
+    poseceni[poc] = 1;
+
+    pom = G->putevi[poc];
+
+    for( i = 0; i < pom -> dim_jednosmerne; i++ )
+    {
+        if( !poseceni[pom->jednosmerne[i]] )
+        {
+            push( &niz, &rep, pom -> jednosmerne[i] );
+            poseceni[pom->jednosmerne[i]]=1;
+        }
+
+        if( G -> putevi[poc] -> rastojanje + G -> putevi[pom->jednosmerne[i]] -> tezina < G -> putevi[pom->jednosmerne[i]] -> rastojanje )
+        {
+            G -> putevi[pom->jednosmerne[i]] -> rastojanje = G -> putevi[poc] -> rastojanje + G -> putevi[pom->jednosmerne[i]] -> tezina;
+            G -> putevi[pom->jednosmerne[i]] -> put = poc;
+        }
+    }
+
+    pom = pom->sledeci;
+
+    while( pom ) //BFS Obilazak
+    {
+        if( !poseceni[pom->redniBroj] )
+        {
+            push( &niz, &rep, pom->redniBroj );
+            poseceni[pom->redniBroj] = 1;
+        };
+
+        if( G->putevi[poc]->rastojanje + pom->tezina < G->putevi[pom->redniBroj]->rastojanje ) //ako je put preko tog cvora manji od starog
+        {
+            G->putevi[pom->redniBroj]->rastojanje = G->putevi[poc]->rastojanje + pom->tezina;
+
+            G->putevi[pom->redniBroj]->put = poc; //Oznacavamo kako posle da znamo put od poc do cilja
+        };
+
+        pom = pom->sledeci;
+        
     };
   };
 
@@ -488,4 +573,24 @@ void stampaj( Graf *G )
             G->putevi[i] = G->putevi[i]->sledeci;
         };
     };
+}
+
+void obrisi_graf( Graf *G )
+{
+    long i;
+    Cvor *pom;
+    
+    for( i = 0 ; i < G->dim ; i++ )
+    {
+        if( G->putevi[i]->dim_jednosmerne ) free( G->putevi[i]->jednosmerne );
+        
+        while( G->putevi[i] )
+        {
+            pom = G->putevi[i];
+            G->putevi[i] = G->putevi[i]->sledeci;
+            free( pom );
+        };
+    };
+    
+    free( G );
 }
