@@ -86,7 +86,7 @@ int main() {
 	char filename[] = "proba.osm";
     long i = 0 , brojac = 0;
     
-    FILE *ulaz_imena = fopen( "proba_cvorovi.txt" , "w" ) , *ulaz_putevi = fopen( "proba_putevi.txt" , "w" );
+    FILE *ulaz_imena = fopen( "pevac_cvorovi.txt" , "w" ) , *ulaz_putevi = fopen( "pevac_putevi.txt" , "w" );
 
 	xmlDoc *doc1 = xmlReadFile(filename, "UTF-8", 0);
 	if (doc1 == NULL) {
