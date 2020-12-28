@@ -3,7 +3,7 @@
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 
-void print_element_names_imena( FILE *ulaz , xmlNode *a_node , long *i ) {
+long print_element_names_imena( FILE *ulaz , xmlNode *a_node , long *i , long *brojac ) {
 	xmlNode *cur_node = NULL;
 
 	for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
@@ -13,35 +13,27 @@ void print_element_names_imena( FILE *ulaz , xmlNode *a_node , long *i ) {
 				xmlChar *id = xmlGetProp(cur_node, "id");
                 xmlChar *lat = xmlGetProp(cur_node, "lat");
                 xmlChar *lon = xmlGetProp(cur_node, "lon");
+                xmlChar *vers = xmlGetProp(cur_node, "version");
+                
 				if (id != NULL) {
-					fprintf(ulaz,"%ld %s %s %s\n", (*i)++ , id,lat,lon);
-
-					xmlNode *childNode = cur_node->children;
-					for (; childNode; childNode = childNode->next) {
-						if (!strcmp("tag", childNode->name)) {
-							xmlChar *key = xmlGetProp(childNode, "lat");
-							xmlChar *value = xmlGetProp(childNode, "lon");
-						}
-						if (!strcmp("nd", childNode->name)) {
-							xmlChar *node_id = xmlGetProp(childNode, "ref");
-
-							if (node_id != NULL) {
-								fprintf(ulaz,"id %s\n", node_id);
-
-								free(node_id);
-
-							}
-						}
-					}
+					fprintf(ulaz,"%s %s %s\n",id,lat,lon);
+                    
+                    (*i)++;
 
 					free(id);
 				}
 
 			}
 		}
+		
+		xmlChar *k = xmlGetProp(cur_node , "k" );
+                
+        if( k != NULL ) (*brojac)++;
 
-		print_element_names_imena(ulaz,cur_node->children,i);
+		print_element_names_imena(ulaz,cur_node->children,i,brojac);
 	}
+	
+	return( *i );
 }
 
 void print_element_names_putevi( FILE *ulaz , xmlNode *a_node) {
@@ -62,7 +54,7 @@ void print_element_names_putevi( FILE *ulaz , xmlNode *a_node) {
 							xmlChar *value = xmlGetProp(childNode, "v");
 
 							if (key != NULL && value != NULL && ( !strcmp( key , "name" ) || !strcmp( key , "oneway" ) || !strcmp( key , "operator" ) ) ) {
-								fprintf(ulaz,"%s '%s'\n", key, value);
+								fprintf(ulaz,"%s %s\n", key, value);
 
 								free(key);
 								free(value);
@@ -89,12 +81,12 @@ void print_element_names_putevi( FILE *ulaz , xmlNode *a_node) {
 		print_element_names_putevi(ulaz,cur_node->children);
 	}
 }
-
+// gcc xml_imena.c -I/usr/include/libxml2 -o a.out -lxml2
 int main() {
-	char filename[] = "pevac.osm";
-    long i = 0;
+	char filename[] = "proba.osm";
+    long i = 0 , brojac = 0;
     
-    FILE *ulaz_imena = fopen( "pevac_cvorovi.txt" , "w" ) , *ulaz_putevi = fopen( "pevac_putevi.txt" , "w" );
+    FILE *ulaz_imena = fopen( "proba_cvorovi.txt" , "w" ) , *ulaz_putevi = fopen( "proba_putevi.txt" , "w" );
 
 	xmlDoc *doc1 = xmlReadFile(filename, "UTF-8", 0);
 	if (doc1 == NULL) {
@@ -104,7 +96,7 @@ int main() {
 	
 	xmlNode *root_imena = xmlDocGetRootElement(doc1);
 
-	print_element_names_imena(ulaz_imena , root_imena , &i );
+	i = print_element_names_imena(ulaz_imena , root_imena , &i , &brojac );
 	
 	xmlFreeDoc(doc1);
 	xmlCleanupParser();
@@ -118,6 +110,8 @@ int main() {
 	}
 
 	xmlNode *root_putevi = xmlDocGetRootElement(doc2);
+    
+    fprintf( ulaz_putevi , "%ld\n" , i );
 
 	print_element_names_putevi(ulaz_putevi , root_putevi);
 
